@@ -78,6 +78,7 @@ const App = () => (
                     <Route path="/chats" element={<ChatsPage />} />
                     <Route path="/featured-gallery" element={<FeaturedGalleryPage />} />
                     <Route path="/travel-requests" element={<TravelRequestsPage />} />
+                    <Route path="/returns" element={<Navigate to="/" replace />} />
                   </Route>
                 </Route>
                 <Route path="*" element={<NotFound />} />

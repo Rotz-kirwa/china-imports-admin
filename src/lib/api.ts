@@ -60,25 +60,17 @@ export const adminApi = {
       recentOrders: Array<Record<string, unknown>>;
       recentChats: Array<Record<string, unknown>>;
     }>("/admin/dashboard"),
+  notifications: () => request<{ unreadInquiries: number }>("/admin/notifications"),
   users: () => request<{ users: Array<Record<string, unknown>> }>("/admin/users"),
   orders: () => request<{ orders: Array<Record<string, unknown>> }>("/admin/orders"),
+  order: (id: string) => request<{ order: Record<string, unknown>; items: Array<Record<string, unknown>> }>(`/admin/orders/${id}`),
   updateOrderStatus: (id: string, status: "shipped" | "delivered" | "cancelled") =>
     request<{ message: string }>(`/admin/orders/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
   payments: () => request<{ payments: Array<Record<string, unknown>> }>("/admin/payments"),
-  inventory: () =>
-    request<{
-      summary: {
-        totalUnits: number;
-        lowStockItems: number;
-        inventoryValue: number;
-        damagedUnits: number;
-      };
-      items: Array<Record<string, unknown>>;
-      movements: Array<Record<string, unknown>>;
-    }>("/admin/inventory"),
+
   appointments: () => request<{ appointments: Array<Record<string, unknown>> }>("/admin/appointments"),
   reviews: () => request<{ reviews: Array<Record<string, unknown>> }>("/admin/reviews"),
   updateReviewStatus: (id: string, status: "approved" | "rejected") =>
@@ -128,11 +120,7 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ status, resolution }),
     }),
-  updateInventory: (id: string, stockQuantity: number, reason: string) =>
-    request<{ message: string }>(`/admin/inventory/${id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ stockQuantity, reason }),
-    }),
+
   getProducts: () => request<{ products: Array<Record<string, unknown>> }>("/admin/products"),
   createProduct: (data: Record<string, unknown>) =>
     request<{ message: string }>("/admin/products", {

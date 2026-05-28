@@ -86,6 +86,18 @@ export default defineConfig(() => ({
     port: adminPreviewPort,
   },
   plugins: [createAdminBaseRedirectPlugin(adminBase), react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom", "lucide-react"],
+          ui: ["@radix-ui/react-accordion", "@radix-ui/react-dialog", "@radix-ui/react-slot", "class-variance-authority", "clsx", "tailwind-merge"],
+          utils: ["@tanstack/react-query", "zod", "date-fns"],
+          charts: ["recharts"]
+        }
+      }
+    }
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -5,6 +5,9 @@
       "framework": "vite"
     }
   },
+  "redirects": [
+    { "source": "/returns", "destination": "/", "statusCode": 307 }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],

@@ -420,35 +420,6 @@ function ProductForm({
             </div>
           </div>
 
-          {/* Section: Inventory */}
-          <div style={{ background: "#f8f9fb", borderRadius: 12, padding: "16px 18px", border: "1px solid #e8eaed" }}>
-            <p style={{ margin: "0 0 14px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280" }}>
-              Inventory &amp; Logistics
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Stock Qty</Label>
-                <Input type="number" min="0" value={form.stockQuantity} onChange={(e) => set("stockQuantity", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Low Stock Alert</Label>
-                <Input type="number" min="0" value={form.lowStockThreshold} onChange={(e) => set("lowStockThreshold", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>MOQ</Label>
-                <Input type="number" min="1" value={form.moq} onChange={(e) => set("moq", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Lead Time</Label>
-                <Input value={form.leadTime} onChange={(e) => set("leadTime", e.target.value)} placeholder="15-25 days" />
-              </div>
-            </div>
-            <div className="mt-3 space-y-1.5">
-              <Label>Warehouse Location</Label>
-              <Input value={form.warehouseLocation} onChange={(e) => set("warehouseLocation", e.target.value)} />
-            </div>
-          </div>
-
           {/* Section: Availability & Tags */}
           <div style={{ background: "#f8f9fb", borderRadius: 12, padding: "16px 18px", border: "1px solid #e8eaed" }}>
             <p style={{ margin: "0 0 14px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280" }}>
@@ -462,6 +433,22 @@ function ProductForm({
               <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14 }}>
                 <input type="checkbox" checked={form.offshoreAvailable} onChange={(e) => set("offshoreAvailable", e.target.checked)} style={{ accentColor: "#d4af37", width: 16, height: 16 }} />
                 Offshore (Wholesale)
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14, fontWeight: "bold", color: "#38B2AC" }}>
+                <input 
+                  type="checkbox" 
+                  checked={form.tags.includes("premium-badge")} 
+                  onChange={(e) => {
+                    const tagArray = form.tags.split(",").map(t => t.trim()).filter(Boolean);
+                    if (e.target.checked) {
+                      if (!tagArray.includes("premium-badge")) set("tags", [...tagArray, "premium-badge"].join(", "));
+                    } else {
+                      set("tags", tagArray.filter(t => t !== "premium-badge").join(", "));
+                    }
+                  }} 
+                  style={{ accentColor: "#38B2AC", width: 16, height: 16 }} 
+                />
+                Show Quality Badge
               </label>
             </div>
             <div className="space-y-1.5">
@@ -547,7 +534,7 @@ export default function ProductsPage() {
       toast.success("Product updated.");
       setPanelOpen(false);
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
+
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to update product."),
   });
@@ -558,7 +545,7 @@ export default function ProductsPage() {
       toast.success("Product removed from catalogue.");
       setDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-inventory"] });
+
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to remove product."),
   });
@@ -702,9 +689,6 @@ export default function ProductsPage() {
                   <TableHead>Retail</TableHead>
                   <TableHead>Wholesale</TableHead>
                   <TableHead>Cost</TableHead>
-                  <TableHead>MOQ</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Lead Time</TableHead>
                   <TableHead>Availability</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -736,20 +720,6 @@ export default function ProductsPage() {
                       <TableCell className="font-semibold text-sm">{formatKsh(p.retailPrice)}</TableCell>
                       <TableCell className="text-sm">{formatKsh(p.wholesalePrice)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{formatKsh(p.costPrice)}</TableCell>
-                      <TableCell className="text-sm">{p.moq}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`text-sm font-semibold ${
-                            p.stockQuantity <= p.lowStockThreshold ? "text-destructive" : ""
-                          }`}
-                        >
-                          {p.stockQuantity}
-                          {p.stockQuantity <= p.lowStockThreshold && (
-                            <span className="ml-1 text-[10px] font-normal text-destructive/70">low</span>
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{p.leadTime}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {p.localAvailable && (

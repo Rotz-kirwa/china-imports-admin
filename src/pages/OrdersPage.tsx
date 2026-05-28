@@ -2,10 +2,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { formatKsh } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api";
 import { toast } from "sonner";
+import { useState } from "react";
+import { Eye, MapPin, Package, User, Clock, CreditCard, ChevronRight } from "lucide-react";
+import { ADMIN_TOKEN_KEY } from "@/lib/api";
+import { Link } from "react-router-dom";
 
 type Order = {
   id: string;
@@ -17,13 +24,56 @@ type Order = {
   paymentStatus: string;
   orderType: string;
   date: string;
+  paymentMethod?: string;
 };
 
 export default function OrdersPage() {
   const queryClient = useQueryClient();
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-orders"],
     queryFn: adminApi.orders,
+  });
+
+  // Real-time order notifications via SSE
+  useEffect(() => {
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if (!token) return;
+    const src = new EventSource(`/api/admin/events?token=${encodeURIComponent(token)}`);
+
+    function onOrderCreated(e: MessageEvent) {
+      try {
+        const payload = JSON.parse((e as any).data || "{}");
+        if (payload && payload.orderNumber) {
+          toast.success(`New order ${payload.orderNumber} — ${payload.customerName}`);
+          queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+        }
+      } catch (err) {
+        // ignore parse errors
+      }
+    }
+
+    src.addEventListener('order_created', onOrderCreated as EventListener);
+    // fallback generic message
+    src.addEventListener('message', onOrderCreated as EventListener);
+
+    src.onerror = () => {
+      // attempt automatic reconnection handled by browser, just log
+      // console.warn('SSE connection error');
+    };
+
+    return () => {
+      src.close();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const { data: detailsData, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ["admin-order", selectedOrderId],
+    queryFn: () => adminApi.order(selectedOrderId!),
+    enabled: !!selectedOrderId,
   });
 
   const updateMutation = useMutation({
@@ -32,6 +82,9 @@ export default function OrdersPage() {
     onSuccess: (_, { status }) => {
       toast.success(`Order marked as ${status}.`);
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      if (selectedOrderId) {
+        queryClient.invalidateQueries({ queryKey: ["admin-order", selectedOrderId] });
+      }
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
     },
@@ -39,6 +92,7 @@ export default function OrdersPage() {
   });
 
   const orderRows = (data?.orders as Order[]) || [];
+  const details = detailsData as { order: any; items: any[] } | undefined;
 
   return (
     <div className="space-y-6">
@@ -46,16 +100,19 @@ export default function OrdersPage() {
         <h1 className="text-2xl font-display font-bold">Orders</h1>
         <p className="text-muted-foreground text-sm mt-1">{orderRows.length} total orders</p>
       </div>
+
       {isLoading && (
         <Card>
           <CardContent className="py-6 text-sm text-muted-foreground">Loading orders...</CardContent>
         </Card>
       )}
+
       {error && (
         <Card className="border-destructive/30">
           <CardContent className="py-6 text-sm text-destructive">Unable to load orders right now.</CardContent>
         </Card>
       )}
+
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -91,43 +148,52 @@ export default function OrdersPage() {
                         {o.paymentStatus}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{String(o.date).slice(0, 10)}</TableCell>
-                    <TableCell>
-                      {o.status === "processing" && (
-                        <div className="flex gap-2">
+                    <TableCell className="text-muted-foreground whitespace-nowrap">
+                      {new Date(o.date).toLocaleDateString()} {new Date(o.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                     </TableCell>
+                     <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2 text-xs flex items-center gap-1"
+                          onClick={() => setSelectedOrderId(o.dbId)}
+                        >
+                          <Eye className="h-3.5 w-3.5" /> View
+                        </Button>
+                        {o.status === "processing" && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              disabled={o.paymentStatus !== "completed" || updateMutation.isPending}
+                              onClick={() => updateMutation.mutate({ id: o.dbId, status: "shipped" })}
+                            >
+                              Mark Shipped
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-7 px-2 text-xs"
+                              disabled={updateMutation.isPending}
+                              onClick={() => updateMutation.mutate({ id: o.dbId, status: "cancelled" })}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                        {o.status === "shipped" && (
                           <Button
                             size="sm"
-                            className="h-7 px-2 text-xs"
-                            disabled={o.paymentStatus !== "completed" || updateMutation.isPending}
-                            onClick={() => updateMutation.mutate({ id: o.dbId, status: "shipped" })}
-                          >
-                            Mark Shipped
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
+                            variant="outline"
                             className="h-7 px-2 text-xs"
                             disabled={updateMutation.isPending}
-                            onClick={() => updateMutation.mutate({ id: o.dbId, status: "cancelled" })}
+                            onClick={() => updateMutation.mutate({ id: o.dbId, status: "delivered" })}
                           >
-                            Cancel
+                            Mark Delivered
                           </Button>
-                        </div>
-                      )}
-                      {o.status === "shipped" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2 text-xs"
-                          disabled={updateMutation.isPending}
-                          onClick={() => updateMutation.mutate({ id: o.dbId, status: "delivered" })}
-                        >
-                          Mark Delivered
-                        </Button>
-                      )}
-                      {(o.status === "delivered" || o.status === "cancelled") && (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -142,6 +208,222 @@ export default function OrdersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Order Details Sheet */}
+      <Sheet open={!!selectedOrderId} onOpenChange={(open) => !open && setSelectedOrderId(null)}>
+        <SheetContent className="w-full sm:max-w-xl p-0 flex flex-col">
+          <SheetHeader className="px-6 py-4 border-b">
+            <SheetTitle className="flex items-center gap-2">
+              Order Details
+              {details?.order && (
+                <Badge variant={details.order.status === "delivered" ? "default" : "secondary"} className="ml-2">
+                  {details.order.status}
+                </Badge>
+              )}
+            </SheetTitle>
+            <SheetDescription>
+              {details?.order ? `Order ID: ${details.order.id}` : "Loading order..."}
+            </SheetDescription>
+          </SheetHeader>
+
+          <ScrollArea className="flex-1">
+            {isLoadingDetails ? (
+              <div className="p-6 text-center text-muted-foreground">Loading details...</div>
+            ) : details?.order ? (
+              <div className="p-6 space-y-8">
+                
+                {/* Order Summary Header Info */}
+                <div className="grid grid-cols-2 gap-4 bg-muted/40 p-4 rounded-lg border border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Order Date & Time</p>
+                    <p className="font-semibold text-sm">
+                      {new Date(details.order.date).toLocaleDateString()} {new Date(details.order.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Amount</p>
+                    <p className="font-semibold text-sm text-gold">
+                      {formatKsh(details.order.total)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Customer Info */}
+                <div className="space-y-3">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    <User className="h-4 w-4" /> Customer Information
+                  </h3>
+                    <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg border border-border/50">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Name</p>
+                        <p className="font-medium text-sm">{details.order.userName}</p>
+                        {details.customerUser && (
+                          <p className="text-xs text-muted-foreground">Registered account: <Link to={`/users/${details.customerUser.id}`} className="text-primary-700 hover:underline">View user</Link></p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="font-medium text-sm">{details.order.customerEmail || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Phone</p>
+                        <p className="font-medium text-sm">{details.order.customerPhone || "N/A"}</p>
+                      </div>
+                    </div>
+                </div>
+
+                {/* Shipping & Payment */}
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                      <MapPin className="h-4 w-4" /> Shipping Address
+                    </h3>
+                    <div className="bg-muted/30 p-4 rounded-lg border border-border/50">
+                      <p className="text-sm whitespace-pre-wrap">{details.order.shippingAddress || "No address provided."}</p>
+                      {details.order.shippingAddress && (
+                        <>
+                          <div className="mt-2">
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(details.order.shippingAddress)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-primary-700 hover:underline"
+                            >
+                              View on map
+                            </a>
+                          </div>
+
+                          <div className="mt-3 rounded overflow-hidden border" style={{ height: 200 }}>
+                            <iframe
+                              title="shipping-location"
+                              src={`https://www.google.com/maps?q=${encodeURIComponent(details.order.shippingAddress)}&output=embed`}
+                              width="100%"
+                              height="200"
+                              style={{ border: 0 }}
+                              allowFullScreen
+                              loading="lazy"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                      <CreditCard className="h-4 w-4" /> Payment Details
+                    </h3>
+                    <div className="bg-muted/30 p-4 rounded-lg border border-border/50 space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-xs text-muted-foreground">Method</span>
+                        <span className="text-sm font-medium capitalize">{details.order.paymentMethod || "M-Pesa"}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="text-xs text-muted-foreground">Status</span>
+                          <div>
+                            <Badge variant={details.order.paymentStatus === "completed" ? "default" : "secondary"} className="h-5 text-[10px]">
+                              {details.order.paymentStatus}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="text-right text-xs text-muted-foreground">
+                          <div>Total: <span className="font-medium text-sm text-gold">{formatKsh(details.order.total)}</span></div>
+                        </div>
+                      </div>
+
+                      {/* Payments history */}
+                      {details.payments && details.payments.length > 0 && (
+                        <div className="pt-2 border-t border-border/20">
+                          <div className="text-xs text-muted-foreground mb-1">Payments</div>
+                          <div className="space-y-2">
+                            {details.payments.map((p: any) => (
+                              <div key={p.dbId} className="flex items-center justify-between text-sm">
+                                <div className="truncate">
+                                  <span className="font-medium">{p.method}</span>
+                                  <span className="text-muted-foreground text-xs ml-2">{p.date ? new Date(p.date).toLocaleString() : ''}</span>
+                                  {p.id && <span className="text-xs text-muted-foreground ml-2">ref: {p.id}</span>}
+                                </div>
+                                <div className="font-semibold">{formatKsh(p.amount)}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Order Items */}
+                <div className="space-y-4">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    <Package className="h-4 w-4" /> Order Items ({details.items.length})
+                  </h3>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead className="w-16">Image</TableHead>
+                          <TableHead>Item</TableHead>
+                          <TableHead className="text-right">Qty</TableHead>
+                          <TableHead className="text-right">Price</TableHead>
+                          <TableHead className="text-right">Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {details.items.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              {item.imageUrl ? (
+                                <img src={item.imageUrl} alt={item.productName} className="w-10 h-10 object-cover rounded-md border" />
+                              ) : (
+                                <div className="w-10 h-10 bg-muted rounded-md border flex items-center justify-center">
+                                  <Package className="w-5 h-5 text-muted-foreground" />
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <p className="font-medium text-sm leading-tight">{item.productName}</p>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {item.sku && <span className="mr-2">SKU: {item.sku}</span>}
+                                {item.externalId && <span className="mr-2">ID: {item.externalId}</span>}
+                              </div>
+                              {item.isWholesale && <Badge variant="outline" className="mt-1 text-[10px]">Wholesale</Badge>}
+                            </TableCell>
+                            <TableCell className="text-right text-sm">{item.quantity}</TableCell>
+                            <TableCell className="text-right text-sm text-muted-foreground">{formatKsh(item.unitPrice)}</TableCell>
+                            <TableCell className="text-right text-sm font-medium">{formatKsh(item.unitPrice * item.quantity)}</TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="bg-muted/30 hover:bg-muted/30">
+                          <TableCell colSpan={4} className="text-right font-bold">Order Total</TableCell>
+                          <TableCell className="text-right font-bold text-gold">{formatKsh(details.order.total)}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                {details.order.notes && (
+                  <div className="space-y-3">
+                    <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                      <Clock className="h-4 w-4" /> Order Notes
+                    </h3>
+                    <div className="bg-amber-50/50 p-4 rounded-lg border border-amber-100 text-sm text-amber-900">
+                      {details.order.notes}
+                    </div>
+                  </div>
+                )}
+                
+              </div>
+            ) : (
+              <div className="p-6 text-center text-muted-foreground">Order details could not be loaded.</div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -2,6 +2,8 @@ import { LayoutDashboard, Users, CreditCard, ShoppingCart, MessageCircle, Boxes,
 import { NavLink } from "@/components/NavLink";
 import { BrandLogo } from "@/components/BrandLogo";
 import { useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { adminApi } from "@/lib/api";
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +25,7 @@ const navItems = [
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Inquiries", url: "/inquiries", icon: MessagesSquare },
   { title: "Travel Requests", url: "/travel-requests", icon: Plane },
-  { title: "Inventory", url: "/inventory", icon: Boxes },
+
   { title: "Appointments", url: "/appointments", icon: CalendarDays },
   { title: "Reviews", url: "/reviews", icon: Star },
   { title: "Reports", url: "/reports", icon: BarChart3 },
@@ -34,6 +36,12 @@ export function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+
+  const { data: notifications } = useQuery({
+    queryKey: ["admin-notifications"],
+    queryFn: adminApi.notifications,
+    refetchInterval: 15000, // Check every 15 seconds
+  });
 
   return (
     <Sidebar collapsible="icon">
@@ -56,8 +64,17 @@ export function AdminSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location.pathname === item.url}>
                     <NavLink to={item.url} end activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <item.icon className="mr-2 h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </div>
+                        {!collapsed && item.title === "Inquiries" && (notifications?.unreadInquiries ?? 0) > 0 && (
+                          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-auto">
+                            {notifications!.unreadInquiries}
+                          </span>
+                        )}
+                      </div>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
