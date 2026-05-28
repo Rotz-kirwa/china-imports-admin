@@ -1,9 +1,51 @@
-<svg viewBox="0 0 64 64" role="img" aria-label="MI&amp;IN GLOBAL IMPORTERS logo" xmlns="http://www.w3.org/2000/svg">
-  <rect width="64" height="64" rx="16" fill="#0f233d"/>
-  <path d="M17 38c7.5 6.6 22.5 6.6 30 0" fill="none" stroke="#d4af37" stroke-width="3" stroke-linecap="round"/>
-  <path d="M16 26c8-6.5 24-6.5 32 0" fill="none" stroke="#d4af37" stroke-width="3" stroke-linecap="round" opacity=".75"/>
-  <path d="M32 14c6 7 6 29 0 36M32 14c-6 7-6 29 0 36" fill="none" stroke="#f3d36b" stroke-width="2" stroke-linecap="round" opacity=".9"/>
-  <path d="M19 32h26m0 0-6-6m6 6-6 6" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M17 46h30v4H17z" fill="#d4af37" opacity=".9"/>
-  <text x="32" y="25" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="10" font-weight="800" fill="#ffffff" letter-spacing=".5">MI</text>
+<svg viewBox="0 0 256 256" role="img" aria-label="MI and IN Global logo mark" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="navyBg" x1="28" y1="28" x2="228" y2="228" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#172b4a"/>
+      <stop offset=".55" stop-color="#0f233d"/>
+      <stop offset="1" stop-color="#081426"/>
+    </linearGradient>
+    <linearGradient id="goldMetal" x1="42" y1="44" x2="214" y2="216" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff1a8"/>
+      <stop offset=".18" stop-color="#d4af37"/>
+      <stop offset=".5" stop-color="#f3d36b"/>
+      <stop offset=".74" stop-color="#9f7628"/>
+      <stop offset="1" stop-color="#f6df8b"/>
+    </linearGradient>
+    <linearGradient id="silverMetal" x1="61" y1="68" x2="201" y2="178" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".22" stop-color="#bfc5cc"/>
+      <stop offset=".5" stop-color="#f5f7f9"/>
+      <stop offset=".75" stop-color="#8d949c"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <filter id="raised" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000000" flood-opacity=".45"/>
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#ffffff" flood-opacity=".2"/>
+    </filter>
+    <filter id="softGlow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="256" height="256" rx="42" fill="url(#navyBg)"/>
+  <circle cx="128" cy="128" r="101" fill="none" stroke="#d4af37" stroke-width="4" opacity=".16"/>
+  <path d="M48 134c21-18 55-29 92-29 22 0 43 4 60 11" fill="none" stroke="url(#goldMetal)" stroke-width="8" stroke-linecap="round" opacity=".92" filter="url(#softGlow)"/>
+  <path d="M52 153c19 22 48 36 81 36 30 0 57-12 76-31" fill="none" stroke="url(#goldMetal)" stroke-width="8" stroke-linecap="round" opacity=".82"/>
+  <path d="M128 40c14 22 21 52 21 88 0 34-7 64-21 88M128 40c-14 22-21 52-21 88 0 34 7 64 21 88" fill="none" stroke="#f3d36b" stroke-width="4" stroke-linecap="round" opacity=".78"/>
+  <path d="M47 128h162" fill="none" stroke="#f3d36b" stroke-width="4" stroke-linecap="round" opacity=".58"/>
+
+  <g filter="url(#raised)">
+    <path d="M56 165V87l70 67 74-82 18 18-92 103-45-44v42H56z" fill="url(#silverMetal)"/>
+    <path d="M66 103v64h14v-49l47 45 69-76-10-9-60 67-60-58z" fill="#ffffff" opacity=".18"/>
+    <path d="M160 98l55-55 8 51-48-8z" fill="url(#goldMetal)"/>
+    <path d="M157 168h18v39h-18zM184 139h18v68h-18z" fill="url(#goldMetal)"/>
+  </g>
+
+  <text x="128" y="225" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="900" letter-spacing="1.6" fill="#f7f7f7">MI &amp; IN</text>
+  <text x="128" y="242" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="3.4" fill="#d4af37">GLOBAL</text>
 </svg>

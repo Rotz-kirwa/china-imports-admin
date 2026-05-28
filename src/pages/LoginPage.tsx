@@ -29,7 +29,7 @@ export default function LoginPage() {
 
     try {
       await login({ email, password });
-      toast.success("Welcome back to MI&IN Admin.");
+      toast.success("Welcome back to MI and IN Admin.");
       navigate(nextPath, { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to sign in.");
@@ -47,9 +47,9 @@ export default function LoginPage() {
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div className="space-y-1">
-            <CardTitle className="font-display text-2xl">MI&IN Admin</CardTitle>
+            <CardTitle className="font-display text-2xl">MI and IN Admin</CardTitle>
             <CardDescription>
-              Secure access for MI&IN GLOBAL IMPORTERS operations, orders, payments, and customer support.
+              Secure access for MI and IN Global operations, orders, payments, and customer support.
             </CardDescription>
           </div>
         </CardHeader>

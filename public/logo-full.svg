@@ -1,0 +1,53 @@
+<svg viewBox="0 0 920 300" role="img" aria-label="MI and IN Global logo" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldMetalFull" x1="55" y1="42" x2="298" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff2aa"/>
+      <stop offset=".18" stop-color="#d4af37"/>
+      <stop offset=".48" stop-color="#f6dc78"/>
+      <stop offset=".72" stop-color="#9c7428"/>
+      <stop offset="1" stop-color="#f7e59c"/>
+    </linearGradient>
+    <linearGradient id="silverMetalFull" x1="90" y1="88" x2="302" y2="202" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".22" stop-color="#b9c0c8"/>
+      <stop offset=".48" stop-color="#f6f7f9"/>
+      <stop offset=".72" stop-color="#8b929b"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <linearGradient id="wordSilver" x1="393" y1="80" x2="805" y2="175" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".28" stop-color="#c8ccd1"/>
+      <stop offset=".58" stop-color="#f4f5f6"/>
+      <stop offset="1" stop-color="#9fa6ad"/>
+    </linearGradient>
+    <filter id="raisedFull" x="-16%" y="-18%" width="135%" height="148%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#000000" flood-opacity=".46"/>
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#ffffff" flood-opacity=".2"/>
+    </filter>
+    <filter id="textShadow" x="-10%" y="-20%" width="120%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000000" flood-opacity=".42"/>
+    </filter>
+  </defs>
+
+  <g transform="translate(34 24)">
+    <circle cx="126" cy="126" r="111" fill="none" stroke="url(#goldMetalFull)" stroke-width="9" opacity=".96"/>
+    <path d="M39 119c24-21 61-33 102-33 25 0 49 5 69 14" fill="none" stroke="url(#goldMetalFull)" stroke-width="7" stroke-linecap="round" opacity=".82"/>
+    <path d="M39 151c24 26 57 41 95 41 34 0 65-13 88-35" fill="none" stroke="url(#goldMetalFull)" stroke-width="7" stroke-linecap="round" opacity=".78"/>
+    <path d="M126 19c17 27 25 62 25 107s-8 80-25 107M126 19c-17 27-25 62-25 107s8 80 25 107" fill="none" stroke="#f6dc78" stroke-width="4.5" stroke-linecap="round" opacity=".8"/>
+    <path d="M30 126h193" fill="none" stroke="#f6dc78" stroke-width="4.5" stroke-linecap="round" opacity=".55"/>
+
+    <g filter="url(#raisedFull)">
+      <path d="M47 171V82l81 77 82-92 20 20-102 114-51-50v47H47z" fill="url(#silverMetalFull)"/>
+      <path d="M59 101v69h17v-47l53 51 77-86-10-10-68 75-69-66z" fill="#ffffff" opacity=".18"/>
+      <path d="M185 90l61-61 9 57-53-9z" fill="url(#goldMetalFull)"/>
+      <path d="M162 176h20v47h-20zM195 143h20v80h-20z" fill="url(#goldMetalFull)"/>
+    </g>
+  </g>
+
+  <g filter="url(#textShadow)">
+    <text x="355" y="138" font-family="Inter, Montserrat, Arial, sans-serif" font-size="82" font-weight="900" letter-spacing="6" fill="url(#wordSilver)">MI &amp; IN</text>
+    <path d="M354 176h90M748 176h90" stroke="#d4af37" stroke-width="5" stroke-linecap="round"/>
+    <text x="462" y="193" font-family="Inter, Montserrat, Arial, sans-serif" font-size="42" font-weight="700" letter-spacing="18" fill="#d4af37">GLOBAL</text>
+    <text x="355" y="229" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="3" fill="#f3d36b" opacity=".88">SOURCING  SHIPPING  TRADE</text>
+  </g>
+</svg>

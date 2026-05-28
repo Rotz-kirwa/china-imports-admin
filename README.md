@@ -1,6 +1,6 @@
-# MI&IN Admin
+# MI and IN Admin
 
-Main admin app for MI&IN GLOBAL IMPORTERS.
+Main admin app for MI and IN Global.
 
 ## Run
 

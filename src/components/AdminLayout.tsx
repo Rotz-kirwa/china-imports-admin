@@ -18,7 +18,7 @@ export function AdminLayout() {
             <SidebarTrigger />
             <div className="flex items-center gap-2">
               <BrandLogo className="h-9 w-9" />
-              <span className="font-display font-semibold text-sm text-muted-foreground">MI&IN GLOBAL IMPORTERS Admin</span>
+              <span className="font-display font-semibold text-sm text-muted-foreground">MI and IN Global Admin</span>
             </div>
             <div className="ml-auto flex items-center gap-3">
               <div className="text-right hidden sm:block">

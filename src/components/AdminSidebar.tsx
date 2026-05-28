@@ -51,7 +51,7 @@ export function AdminSidebar() {
             <BrandLogo className="h-10 w-10" />
             {!collapsed && (
               <h1 className="font-display text-lg font-bold text-sidebar-accent-foreground tracking-tight">
-                MI&IN Admin
+                MI and IN Admin
               </h1>
             )}
           </div>
