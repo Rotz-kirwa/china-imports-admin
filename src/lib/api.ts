@@ -64,10 +64,10 @@ export const adminApi = {
   users: () => request<{ users: Array<Record<string, unknown>> }>("/admin/users"),
   orders: () => request<{ orders: Array<Record<string, unknown>> }>("/admin/orders"),
   order: (id: string) => request<{ order: Record<string, unknown>; items: Array<Record<string, unknown>> }>(`/admin/orders/${id}`),
-  updateOrderStatus: (id: string, status: "shipped" | "delivered" | "cancelled") =>
+  updateOrderStatus: (id: string, status: string, notes?: string) =>
     request<{ message: string }>(`/admin/orders/${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, notes }),
     }),
   payments: () => request<{ payments: Array<Record<string, unknown>> }>("/admin/payments"),
 

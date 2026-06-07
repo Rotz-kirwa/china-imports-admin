@@ -5,6 +5,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { formatKsh } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/lib/api";
@@ -76,9 +79,13 @@ export default function OrdersPage() {
     enabled: !!selectedOrderId,
   });
 
+  const [newStatus, setNewStatus] = useState<string>("");
+  const [newNotes, setNewNotes] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
   const updateMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "shipped" | "delivered" | "cancelled" }) =>
-      adminApi.updateOrderStatus(id, status),
+    mutationFn: ({ id, status, notes }: { id: string; status: string; notes?: string }) =>
+      adminApi.updateOrderStatus(id, status, notes),
     onSuccess: (_, { status }) => {
       toast.success(`Order marked as ${status}.`);
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
@@ -87,6 +94,8 @@ export default function OrdersPage() {
       }
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      setNewStatus("");
+      setNewNotes("");
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : "Failed to update order."),
   });
@@ -96,9 +105,24 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold">Orders</h1>
-        <p className="text-muted-foreground text-sm mt-1">{orderRows.length} total orders</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-display font-bold">Orders</h1>
+          <p className="text-muted-foreground text-sm mt-1">{orderRows.length} total orders</p>
+        </div>
+        <div className="w-full sm:w-64">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {["Order Received", "Order Confirmed", "Processing", "Awaiting Payment", "Payment Confirmed", "Packaging", "Dispatched", "In Transit", "Out for Delivery", "Delivered", "Completed", "Cancelled", "Refunded"].map(st => (
+                <SelectItem key={st} value={st}>{st}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading && (
@@ -130,8 +154,8 @@ export default function OrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orderRows.length ? (
-                orderRows.map(o => (
+              {orderRows.filter(o => statusFilter === "all" || o.status === statusFilter).length ? (
+                orderRows.filter(o => statusFilter === "all" || o.status === statusFilter).map(o => (
                   <TableRow key={o.id}>
                     <TableCell className="font-mono text-xs">{o.id}</TableCell>
                     <TableCell className="font-medium">{o.userName}</TableCell>
@@ -152,48 +176,14 @@ export default function OrdersPage() {
                       {new Date(o.date).toLocaleDateString()} {new Date(o.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                      </TableCell>
                      <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2 text-xs flex items-center gap-1"
-                          onClick={() => setSelectedOrderId(o.dbId)}
-                        >
-                          <Eye className="h-3.5 w-3.5" /> View
-                        </Button>
-                        {o.status === "processing" && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              disabled={o.paymentStatus !== "completed" || updateMutation.isPending}
-                              onClick={() => updateMutation.mutate({ id: o.dbId, status: "shipped" })}
-                            >
-                              Mark Shipped
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="h-7 px-2 text-xs"
-                              disabled={updateMutation.isPending}
-                              onClick={() => updateMutation.mutate({ id: o.dbId, status: "cancelled" })}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        )}
-                        {o.status === "shipped" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-xs"
-                            disabled={updateMutation.isPending}
-                            onClick={() => updateMutation.mutate({ id: o.dbId, status: "delivered" })}
-                          >
-                            Mark Delivered
-                          </Button>
-                        )}
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs flex items-center gap-1"
+                        onClick={() => setSelectedOrderId(o.dbId)}
+                      >
+                        <Eye className="h-3.5 w-3.5" /> View
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -416,6 +406,63 @@ export default function OrdersPage() {
                     </div>
                   </div>
                 )}
+
+                <Separator />
+
+                {/* Status Timeline */}
+                {details.statusHistory && details.statusHistory.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Status Timeline</h3>
+                    <div className="space-y-4 border-l-2 border-primary/20 ml-2 pl-4">
+                      {details.statusHistory.map((h: any) => (
+                        <div key={h.id} className="relative">
+                          <div className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-white" />
+                          <div className="text-sm font-semibold">{h.status}</div>
+                          <div className="text-xs text-muted-foreground">{new Date(h.date).toLocaleString()}</div>
+                          {h.notes && <div className="mt-1 text-sm bg-muted/50 p-2 rounded">{h.notes}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* Update Status Form */}
+                <div className="space-y-4 pb-6">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Update Order Status</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs mb-1 block">New Status</Label>
+                      <Select value={newStatus} onValueChange={setNewStatus}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["Order Received", "Order Confirmed", "Processing", "Awaiting Payment", "Payment Confirmed", "Packaging", "Dispatched", "In Transit", "Out for Delivery", "Delivered", "Completed", "Cancelled", "Refunded"].map((st) => (
+                            <SelectItem key={st} value={st}>{st}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs mb-1 block">Notes (Optional)</Label>
+                      <Textarea 
+                        placeholder="Add details about this status change..." 
+                        value={newNotes} 
+                        onChange={(e) => setNewNotes(e.target.value)} 
+                        className="resize-none"
+                      />
+                    </div>
+                    <Button 
+                      className="w-full" 
+                      disabled={!newStatus || updateMutation.isPending}
+                      onClick={() => updateMutation.mutate({ id: details.order.dbId, status: newStatus, notes: newNotes })}
+                    >
+                      {updateMutation.isPending ? "Updating..." : "Update Status"}
+                    </Button>
+                  </div>
+                </div>
                 
               </div>
             ) : (
