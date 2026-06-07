@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { formatKsh } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { adminApi } from "@/lib/api";
+import { adminApi, ADMIN_TOKEN_KEY, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Eye, MapPin, Package, User, Clock, CreditCard, ChevronRight } from "lucide-react";
@@ -43,7 +43,7 @@ export default function OrdersPage() {
   useEffect(() => {
     const token = localStorage.getItem(ADMIN_TOKEN_KEY);
     if (!token) return;
-    const src = new EventSource(`/api/admin/events?token=${encodeURIComponent(token)}`);
+    const src = new EventSource(`${API_BASE}/admin/events?token=${encodeURIComponent(token)}`);
 
     function onOrderCreated(e: MessageEvent) {
       try {
