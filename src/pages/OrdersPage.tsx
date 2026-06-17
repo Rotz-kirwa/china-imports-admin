@@ -136,7 +136,6 @@ export default function OrdersPage() {
         queryClient.invalidateQueries({ queryKey: ["admin-order", selectedOrderId] });
       }
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
       setNewStatus("");
       setNewNotes("");
     },

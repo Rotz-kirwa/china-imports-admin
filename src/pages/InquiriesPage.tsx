@@ -57,9 +57,9 @@ export default function InquiriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold">Inquiries</h1>
+          <h1 className="text-2xl font-display font-bold">Contact Inquiries</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Track contact messages, sourcing requests, and travel assistance leads.
+            Track and manage general contact messages.
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted px-3 py-1.5 rounded-full">

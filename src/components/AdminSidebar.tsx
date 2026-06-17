@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, CreditCard, ShoppingCart, MessageCircle, Boxes, CalendarDays, Star, RotateCcw, BarChart3, Package, MessagesSquare, Images, Plane } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, ShoppingCart, MessageCircle, Boxes, CalendarDays, Star, RotateCcw, Package, MessagesSquare, Images, Plane, Search } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { BrandLogo } from "@/components/BrandLogo";
 import { useLocation } from "react-router-dom";
@@ -24,11 +24,11 @@ const navItems = [
   { title: "Payments", url: "/payments", icon: CreditCard },
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Inquiries", url: "/inquiries", icon: MessagesSquare },
+  { title: "Sourcing Requests", url: "/sourcing-requests", icon: Search },
   { title: "Travel Requests", url: "/travel-requests", icon: Plane },
 
   { title: "Appointments", url: "/appointments", icon: CalendarDays },
   { title: "Reviews", url: "/reviews", icon: Star },
-  { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Chats", url: "/chats", icon: MessageCircle },
 ];
 

@@ -14,11 +14,11 @@ const OrdersPage = lazy(() => import("@/pages/OrdersPage"));
 const ChatsPage = lazy(() => import("@/pages/ChatsPage"));
 const AppointmentsPage = lazy(() => import("@/pages/AppointmentsPage"));
 const ReviewsPage = lazy(() => import("@/pages/ReviewsPage"));
-const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
 const ProductsPage = lazy(() => import("@/pages/ProductsPage"));
 const InquiriesPage = lazy(() => import("@/pages/InquiriesPage"));
 const FeaturedGalleryPage = lazy(() => import("@/pages/FeaturedGalleryPage"));
 const TravelRequestsPage = lazy(() => import("@/pages/TravelRequestsPage"));
+const SourcingRequestsPage = lazy(() => import("@/pages/SourcingRequestsPage"));
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
@@ -83,10 +83,10 @@ const App = () => (
                     <Route path="/appointments" element={<AppointmentsPage />} />
                     <Route path="/reviews" element={<ReviewsPage />} />
                     <Route path="/inquiries" element={<InquiriesPage />} />
-                    <Route path="/reports" element={<ReportsPage />} />
                     <Route path="/chats" element={<ChatsPage />} />
                     <Route path="/featured-gallery" element={<FeaturedGalleryPage />} />
                     <Route path="/travel-requests" element={<TravelRequestsPage />} />
+                    <Route path="/sourcing-requests" element={<SourcingRequestsPage />} />
                     <Route path="/returns" element={<Navigate to="/" replace />} />
                   </Route>
                 </Route>

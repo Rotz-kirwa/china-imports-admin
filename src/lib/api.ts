@@ -85,19 +85,12 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
-  reports: () =>
-    request<{
-      summary: {
-        revenue: number;
-        cogs: number;
-        grossProfit: number;
-        pendingPayments: number;
-        lowStockItems: number;
-      };
-      productProfitability: Array<Record<string, unknown>>;
-      monthlyPerformance: Array<Record<string, unknown>>;
-      revenueByType: Array<Record<string, unknown>>;
-    }>("/admin/reports"),
+  sourcingRequests: () => request<{ sourcingRequests: InquiryRecord[] }>("/admin/sourcing-requests"),
+  updateSourcingRequestStatus: (id: string, status: "new" | "reviewing" | "contacted" | "quoted" | "resolved" | "closed") =>
+    request<{ message: string; status: string }>(`/admin/sourcing-requests/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
   chats: () => request<{ chats: Array<Record<string, unknown>> }>("/admin/chats"),
   chatMessages: (id: string) => request<{ messages: Array<{ from: string; text: string; time: string }> }>(`/admin/chats/${id}/messages`),
   sendChatMessage: (id: string, body: string) =>
