@@ -1,4 +1,4 @@
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://global-trade-backend-sjce.onrender.com/api";
 export const ADMIN_TOKEN_KEY = "bci-admin-token";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
