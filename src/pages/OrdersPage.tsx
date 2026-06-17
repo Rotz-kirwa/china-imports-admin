@@ -30,6 +30,49 @@ type Order = {
   paymentMethod?: string;
 };
 
+type OrderDetails = {
+  order: {
+    id: string;
+    dbId: string;
+    userName: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    shippingAddress?: string;
+    paymentMethod?: string;
+    paymentStatus: string;
+    total: number;
+    status: string;
+    date: string;
+    notes?: string;
+  };
+  items: Array<{
+    id: string;
+    productName: string;
+    imageUrl?: string;
+    sku?: string;
+    externalId?: string;
+    quantity: number;
+    unitPrice: number;
+    isWholesale: boolean;
+  }>;
+  customerUser?: {
+    id: string;
+  };
+  payments?: Array<{
+    dbId: string;
+    method: string;
+    date?: string;
+    id?: string;
+    amount: number;
+  }>;
+  statusHistory?: Array<{
+    id: string;
+    status: string;
+    date: string;
+    notes?: string;
+  }>;
+};
+
 export default function OrdersPage() {
   const queryClient = useQueryClient();
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -47,7 +90,7 @@ export default function OrdersPage() {
 
     function onOrderCreated(e: MessageEvent) {
       try {
-        const payload = JSON.parse((e as any).data || "{}");
+        const payload = JSON.parse(e.data || "{}");
         if (payload && payload.orderNumber) {
           toast.success(`New order ${payload.orderNumber} — ${payload.customerName}`);
           queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
@@ -101,7 +144,7 @@ export default function OrdersPage() {
   });
 
   const orderRows = (data?.orders as Order[]) || [];
-  const details = detailsData as { order: any; items: any[] } | undefined;
+  const details = detailsData as OrderDetails | undefined;
 
   return (
     <div className="space-y-6">
@@ -326,7 +369,7 @@ export default function OrdersPage() {
                         <div className="pt-2 border-t border-border/20">
                           <div className="text-xs text-muted-foreground mb-1">Payments</div>
                           <div className="space-y-2">
-                            {details.payments.map((p: any) => (
+                            {details.payments.map((p) => (
                               <div key={p.dbId} className="flex items-center justify-between text-sm">
                                 <div className="truncate">
                                   <span className="font-medium">{p.method}</span>
@@ -414,7 +457,7 @@ export default function OrdersPage() {
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Status Timeline</h3>
                     <div className="space-y-4 border-l-2 border-primary/20 ml-2 pl-4">
-                      {details.statusHistory.map((h: any) => (
+                      {details.statusHistory.map((h) => (
                         <div key={h.id} className="relative">
                           <div className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-white" />
                           <div className="text-sm font-semibold">{h.status}</div>
