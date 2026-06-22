@@ -1,6 +1,7 @@
 export const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://global-trade-backend-sjce.onrender.com/api";
 export const ADMIN_TOKEN_KEY = "bci-admin-token";
 
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem(ADMIN_TOKEN_KEY);
   const response = await fetch(`${API_BASE}${path}`, {
@@ -60,7 +61,7 @@ export const adminApi = {
       recentOrders: Array<Record<string, unknown>>;
       recentChats: Array<Record<string, unknown>>;
     }>("/admin/dashboard"),
-  notifications: () => request<{ unreadInquiries: number }>("/admin/notifications"),
+  notifications: () => request<{ unreadInquiries: number; unreadSourcing: number; unreadTravel: number }>("/admin/notifications"),
   users: () => request<{ users: Array<Record<string, unknown>> }>("/admin/users"),
   orders: () => request<{ orders: Array<Record<string, unknown>> }>("/admin/orders"),
   order: (id: string) => request<{ order: Record<string, unknown>; items: Array<Record<string, unknown>> }>(`/admin/orders/${id}`),
@@ -120,6 +121,11 @@ export const adminApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  bulkCreateProducts: (products: Array<Record<string, unknown>>) =>
+    request<{ message: string }>("/admin/products/bulk", {
+      method: "POST",
+      body: JSON.stringify({ products }),
+    }),
   updateProduct: (id: string, data: Record<string, unknown>) =>
     request<{ message: string }>(`/admin/products/${id}`, {
       method: "PUT",
@@ -127,6 +133,23 @@ export const adminApi = {
     }),
   deleteProduct: (id: string) =>
     request<{ message: string }>(`/admin/products/${id}`, { method: "DELETE" }),
+  uploadImage: async (file: File) => {
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    const formData = new FormData();
+    formData.append("image", file);
+    const response = await fetch(`${API_BASE}/admin/upload`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to upload image.");
+    }
+    return data as { imageUrl: string; message: string };
+  },
   getTravelRequests: () =>
     request<{
       travelRequests: Array<{
@@ -140,6 +163,13 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+  adjustInventory: (payload: { productId: string; changeQuantity: number; reason: string }) =>
+    request<{ message: string; newQuantity: number }>("/admin/inventory/adjust", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  getInventoryLogs: () => request<{ logs: Array<Record<string, unknown>> }>("/admin/inventory/logs"),
+  getInventoryStats: () => request<{ stats: Record<string, unknown> }>("/admin/inventory/stats"),
   getFeaturedGallery: () =>
     request<{ items: Array<{ id: string; imageUrl: string; sortOrder: number }> }>("/featured-gallery"),
   addFeaturedGalleryItem: (imageUrl: string) =>

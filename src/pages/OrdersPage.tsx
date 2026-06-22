@@ -14,7 +14,6 @@ import { adminApi, ADMIN_TOKEN_KEY, API_BASE } from "@/lib/api";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Eye, MapPin, Package, User, Clock, CreditCard, ChevronRight } from "lucide-react";
-import { ADMIN_TOKEN_KEY } from "@/lib/api";
 import { Link } from "react-router-dom";
 
 type Order = {

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Papa from "papaparse";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, PackageSearch, Package, X, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, PackageSearch, Package, X, ImageIcon, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ type Product = {
   offshoreAvailable: boolean;
   inStock: boolean;
   tags: string[];
+  specs: string[];
 };
 
 const CATEGORIES = [
@@ -215,6 +217,7 @@ const EMPTY_FORM = {
   localAvailable: true,
   offshoreAvailable: true,
   tags: "",
+  specs: "",
   externalId: "",
 };
 
@@ -238,6 +241,7 @@ function toPayload(f: FormState) {
     localAvailable: f.localAvailable,
     offshoreAvailable: f.offshoreAvailable,
     tags: f.tags ? f.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
+    specs: f.specs ? f.specs.split("\n").map((s) => s.trim()).filter(Boolean) : [],
     externalId: f.externalId.trim(),
   };
 }
@@ -260,6 +264,7 @@ function productToForm(p: Product): FormState {
     localAvailable: p.localAvailable,
     offshoreAvailable: p.offshoreAvailable,
     tags: (p.tags || []).join(", "),
+    specs: (p.specs || []).join("\n"),
     externalId: p.externalId || "",
   };
 }
@@ -282,6 +287,26 @@ function ProductForm({
 }) {
   const set = (key: keyof FormState, value: string | boolean) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const result = await adminApi.uploadImage(file);
+      set("imageUrl", result.imageUrl);
+      toast.success("Image uploaded successfully!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upload image");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   return (
     <>
@@ -369,6 +394,16 @@ function ProductForm({
                   placeholder="Describe the product features and specs…"
                 />
               </div>
+              <div className="space-y-1.5">
+                <Label>Specifications (One per line)</Label>
+                <textarea
+                  rows={3}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", fontSize: 14, resize: "none", outline: "none", fontFamily: "inherit" }}
+                  value={form.specs}
+                  onChange={(e) => set("specs", e.target.value)}
+                  placeholder="E.g.&#10;Bluetooth 5.0&#10;Battery life: 10 hours&#10;Waterproof IPX7"
+                />
+              </div>
             </div>
           </div>
 
@@ -377,9 +412,30 @@ function ProductForm({
             <p style={{ margin: "0 0 14px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280" }}>
               Product Image
             </p>
-            <div className="space-y-1.5">
-              <Label>Image URL <span className="text-destructive">*</span></Label>
-              <Input required value={form.imageUrl} onChange={(e) => set("imageUrl", e.target.value)} placeholder="https://i.pinimg.com/…" />
+            <div className="space-y-3">
+              <div className="flex flex-col gap-2">
+                <Label>Upload Image <span className="text-destructive">*</span></Label>
+                <div className="flex gap-2">
+                  <Input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="cursor-pointer"
+                  />
+                  {isUploading && <div className="flex items-center text-sm text-muted-foreground">Uploading...</div>}
+                </div>
+              </div>
+              <div className="relative flex items-center py-2">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="flex-shrink-0 mx-4 text-xs text-gray-400">OR PROVIDE URL</span>
+                <div className="flex-grow border-t border-gray-300"></div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Image URL <span className="text-destructive">*</span></Label>
+                <Input required value={form.imageUrl} onChange={(e) => set("imageUrl", e.target.value)} placeholder="https://i.pinimg.com/…" disabled={isUploading} />
+              </div>
             </div>
             <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
               {form.imageUrl ? (
@@ -416,6 +472,23 @@ function ProductForm({
               <div className="space-y-1.5">
                 <Label>Cost <span className="text-destructive">*</span></Label>
                 <Input required type="number" min="0" step="0.01" value={form.costPrice} onChange={(e) => set("costPrice", e.target.value)} placeholder="1200" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Inventory Control */}
+          <div style={{ background: "#f8f9fb", borderRadius: 12, padding: "16px 18px", border: "1px solid #e8eaed" }}>
+            <p style={{ margin: "0 0 14px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#6b7280" }}>
+              Inventory Control
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Stock Quantity <span className="text-destructive">*</span></Label>
+                <Input required type="number" min="0" value={form.stockQuantity} onChange={(e) => set("stockQuantity", e.target.value)} placeholder="50" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Low Stock Threshold <span className="text-destructive">*</span></Label>
+                <Input required type="number" min="0" value={form.lowStockThreshold} onChange={(e) => set("lowStockThreshold", e.target.value)} placeholder="10" />
               </div>
             </div>
           </div>
@@ -461,12 +534,12 @@ function ProductForm({
           <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingBottom: 8 }}>
             <button
               type="submit"
-              disabled={isSaving}
+              disabled={isSaving || isUploading}
               style={{
                 width: "100%", padding: "15px 0", borderRadius: 10,
-                background: isSaving ? "#c49b1a" : "linear-gradient(135deg, #d4af37 0%, #f0c040 100%)",
+                background: (isSaving || isUploading) ? "#c49b1a" : "linear-gradient(135deg, #d4af37 0%, #f0c040 100%)",
                 color: "#1a1a00", fontWeight: 800, fontSize: 16,
-                border: "none", cursor: isSaving ? "not-allowed" : "pointer",
+                border: "none", cursor: (isSaving || isUploading) ? "not-allowed" : "pointer",
                 boxShadow: "0 4px 14px rgba(212,175,55,0.4)",
                 letterSpacing: "0.01em",
               }}
@@ -493,10 +566,121 @@ function ProductForm({
   );
 }
 
+/* ─── Bulk Upload Modal ─────────────────────────────────────────── */
+function BulkUploadModal({
+  onClose,
+  onUpload,
+}: {
+  onClose: () => void;
+  onUpload: (products: any[]) => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [parsing, setParsing] = useState(false);
+
+  const downloadTemplate = () => {
+    const headers = "Name,Category,SKU,Description,RetailPrice,WholesalePrice,CostPrice,MOQ,LeadTime,ImageURL,StockQuantity,LowStockThreshold,WarehouseLocation,LocalAvailable,OffshoreAvailable,Tags\n";
+    const sample = 'Sample Product,"Electronics & Accessories",SKU-123,"A nice description",2000,1500,1000,5,15-25 days,"https://example.com/image.jpg",50,10,"Main Warehouse",true,true,"new, featured"\n';
+    const blob = new Blob([headers + sample], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "product_upload_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleUpload = () => {
+    if (!file) return;
+    setParsing(true);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        try {
+          const parsedProducts = results.data.map((row: any) => ({
+            name: row.Name?.trim() || "Untitled",
+            category: row.Category?.trim() || "Uncategorized",
+            sku: row.SKU?.trim() || `SKU-${Math.floor(Math.random() * 100000)}`,
+            description: row.Description?.trim() || "No description provided.",
+            retailPrice: Number(row.RetailPrice) || 0,
+            wholesalePrice: Number(row.WholesalePrice) || 0,
+            costPrice: Number(row.CostPrice) || 0,
+            moq: Number(row.MOQ) || 1,
+            leadTime: row.LeadTime?.trim() || "15-25 days",
+            imageUrl: row.ImageURL?.trim() || "",
+            stockQuantity: Number(row.StockQuantity) || 0,
+            lowStockThreshold: Number(row.LowStockThreshold) || 10,
+            warehouseLocation: row.WarehouseLocation?.trim() || "Main Warehouse",
+            localAvailable: row.LocalAvailable?.toString().toLowerCase() === "true",
+            offshoreAvailable: row.OffshoreAvailable?.toString().toLowerCase() === "true",
+            tags: row.Tags ? row.Tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
+          }));
+          onUpload(parsedProducts);
+        } catch (e) {
+          toast.error("Failed to parse CSV. Please check the template format.");
+        } finally {
+          setParsing(false);
+        }
+      },
+      error: (error: any) => {
+        toast.error(`CSV Parsing Error: ${error.message}`);
+        setParsing(false);
+      }
+    });
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.65)" }} onClick={onClose} />
+      <div className="fixed z-50 inset-x-3 top-1/4 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[500px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gold/20 flex items-center justify-center">
+              <Upload className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <p className="font-bold text-white m-0">Bulk Upload Products</p>
+              <p className="text-xs text-white/60 m-0">Upload a CSV file to add multiple products</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center text-white hover:bg-white/20">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-6 flex flex-col gap-5">
+          <div className="bg-blue-50 text-blue-800 text-sm p-4 rounded-lg border border-blue-100">
+            <p className="font-semibold mb-1">How it works:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Download the template CSV.</li>
+              <li>Fill in your products exactly matching the columns.</li>
+              <li>Upload the CSV below. Existing SKUs will be updated!</li>
+            </ul>
+            <Button variant="outline" size="sm" onClick={downloadTemplate} className="mt-3 bg-white text-blue-700 border-blue-200 hover:bg-blue-100">
+              Download Template
+            </Button>
+          </div>
+          <div className="space-y-2">
+            <Label>Select CSV File</Label>
+            <Input type="file" accept=".csv" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+          </div>
+          <div className="flex gap-3 mt-2">
+            <Button onClick={onClose} variant="outline" className="flex-1">Cancel</Button>
+            <Button onClick={handleUpload} disabled={!file || parsing} className="flex-1 bg-gold text-black hover:bg-gold/90">
+              {parsing ? "Parsing..." : "Upload & Process"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 /* ─── Main Page ───────────────────────────────────────────────────── */
 export default function ProductsPage() {
   const queryClient = useQueryClient();
   const [panelOpen, setPanelOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -537,6 +721,16 @@ export default function ProductsPage() {
 
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to update product."),
+  });
+
+  const bulkMutation = useMutation({
+    mutationFn: (products: any[]) => adminApi.bulkCreateProducts(products),
+    onSuccess: () => {
+      toast.success("Bulk upload successful.");
+      setBulkOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to bulk upload products."),
   });
 
   const deleteMutation = useMutation({
@@ -585,14 +779,25 @@ export default function ProductsPage() {
             Add, edit, and remove products from the catalogue.
           </p>
         </div>
-        <Button
-          onClick={openAdd}
-          size="lg"
-          className="bg-gold text-accent-foreground hover:bg-gold/90 shadow-sm gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Product
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setBulkOpen(true)}
+            size="lg"
+            variant="outline"
+            className="shadow-sm gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Bulk Upload CSV
+          </Button>
+          <Button
+            onClick={openAdd}
+            size="lg"
+            className="bg-gold text-accent-foreground hover:bg-gold/90 shadow-sm gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add New Product
+          </Button>
+        </div>
       </div>
 
       {/* Quick-action banner when catalogue is empty */}
@@ -780,6 +985,14 @@ export default function ProductsPage() {
           isSaving={isSaving}
           onSubmit={handleSubmit}
           onClose={() => setPanelOpen(false)}
+        />
+      )}
+
+      {/* Bulk Upload Modal */}
+      {bulkOpen && (
+        <BulkUploadModal
+          onClose={() => setBulkOpen(false)}
+          onUpload={(products) => bulkMutation.mutate(products)}
         />
       )}
 

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Images } from "lucide-react";
+import { Plus, Trash2, Images, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,33 @@ export default function FeaturedGalleryPage() {
   const queryClient = useQueryClient();
   const [url, setUrl] = useState("");
   const [preview, setPreview] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    let successCount = 0;
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const result = await adminApi.uploadImage(files[i]);
+        await adminApi.addFeaturedGalleryItem(result.imageUrl);
+        successCount++;
+      } catch (err: any) {
+        toast.error(`Failed to upload ${files[i].name}: ${err.message}`);
+      }
+    }
+    
+    if (successCount > 0) {
+      toast.success(`Successfully added ${successCount} image(s) to gallery.`);
+      queryClient.invalidateQueries({ queryKey: ["admin-featured-gallery"] });
+    }
+    
+    setIsUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-featured-gallery"],
@@ -63,28 +90,52 @@ export default function FeaturedGalleryPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div className="flex gap-3">
-              <div className="flex-1 space-y-1.5">
-                <Label>Image URL</Label>
-                <Input
-                  required
-                  value={url}
-                  onChange={(e) => {
-                    setUrl(e.target.value);
-                    setPreview(e.target.value);
-                  }}
-                  placeholder="https://i.pinimg.com/…"
-                />
+          <form onSubmit={handleAdd} className="space-y-6">
+            <div className="space-y-3">
+              <div className="flex flex-col gap-2">
+                <Label>Upload Images</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    type="file" 
+                    accept="image/*" 
+                    multiple
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="cursor-pointer"
+                  />
+                  {isUploading && <div className="flex items-center text-sm text-muted-foreground">Uploading...</div>}
+                </div>
               </div>
-              <div className="flex items-end">
-                <Button
-                  type="submit"
-                  disabled={addMutation.isPending || !url.trim()}
-                  className="bg-gold text-accent-foreground hover:bg-gold/90"
-                >
-                  {addMutation.isPending ? "Adding…" : "Add Image"}
-                </Button>
+              
+              <div className="relative flex items-center py-2">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="flex-shrink-0 mx-4 text-xs text-gray-400">OR PROVIDE URL</span>
+                <div className="flex-grow border-t border-gray-300"></div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-1 space-y-1.5">
+                  <Label>Image URL</Label>
+                  <Input
+                    value={url}
+                    onChange={(e) => {
+                      setUrl(e.target.value);
+                      setPreview(e.target.value);
+                    }}
+                    placeholder="https://i.pinimg.com/…"
+                    disabled={isUploading}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    type="submit"
+                    disabled={addMutation.isPending || !url.trim() || isUploading}
+                    className="bg-gold text-accent-foreground hover:bg-gold/90"
+                  >
+                    {addMutation.isPending ? "Adding…" : "Add Image"}
+                  </Button>
+                </div>
               </div>
             </div>
 

@@ -15,6 +15,7 @@ const ChatsPage = lazy(() => import("@/pages/ChatsPage"));
 const AppointmentsPage = lazy(() => import("@/pages/AppointmentsPage"));
 const ReviewsPage = lazy(() => import("@/pages/ReviewsPage"));
 const ProductsPage = lazy(() => import("@/pages/ProductsPage"));
+const InventoryPage = lazy(() => import("@/pages/InventoryPage"));
 const InquiriesPage = lazy(() => import("@/pages/InquiriesPage"));
 const FeaturedGalleryPage = lazy(() => import("@/pages/FeaturedGalleryPage"));
 const TravelRequestsPage = lazy(() => import("@/pages/TravelRequestsPage"));
@@ -80,6 +81,7 @@ const App = () => (
                     <Route path="/payments" element={<PaymentsPage />} />
                     <Route path="/orders" element={<OrdersPage />} />
                     <Route path="/products" element={<ProductsPage />} />
+                    <Route path="/inventory" element={<InventoryPage />} />
                     <Route path="/appointments" element={<AppointmentsPage />} />
                     <Route path="/reviews" element={<ReviewsPage />} />
                     <Route path="/inquiries" element={<InquiriesPage />} />
