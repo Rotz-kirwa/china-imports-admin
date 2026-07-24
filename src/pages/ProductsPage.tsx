@@ -300,8 +300,8 @@ function ProductForm({
       const result = await adminApi.uploadImage(file);
       set("imageUrl", result.imageUrl);
       toast.success("Image uploaded successfully!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to upload image");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload image");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -572,7 +572,7 @@ function BulkUploadModal({
   onUpload,
 }: {
   onClose: () => void;
-  onUpload: (products: any[]) => void;
+  onUpload: (products: Record<string, unknown>[]) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [parsing, setParsing] = useState(false);
@@ -598,7 +598,7 @@ function BulkUploadModal({
       skipEmptyLines: true,
       complete: (results) => {
         try {
-          const parsedProducts = results.data.map((row: any) => ({
+          const parsedProducts = (results.data as Record<string, string>[]).map((row) => ({
             name: row.Name?.trim() || "Untitled",
             category: row.Category?.trim() || "Uncategorized",
             sku: row.SKU?.trim() || `SKU-${Math.floor(Math.random() * 100000)}`,
@@ -617,13 +617,13 @@ function BulkUploadModal({
             tags: row.Tags ? row.Tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [],
           }));
           onUpload(parsedProducts);
-        } catch (e) {
+        } catch {
           toast.error("Failed to parse CSV. Please check the template format.");
         } finally {
           setParsing(false);
         }
       },
-      error: (error: any) => {
+      error: (error: Error) => {
         toast.error(`CSV Parsing Error: ${error.message}`);
         setParsing(false);
       }
@@ -724,7 +724,7 @@ export default function ProductsPage() {
   });
 
   const bulkMutation = useMutation({
-    mutationFn: (products: any[]) => adminApi.bulkCreateProducts(products),
+    mutationFn: (products: Record<string, unknown>[]) => adminApi.bulkCreateProducts(products),
     onSuccess: () => {
       toast.success("Bulk upload successful.");
       setBulkOpen(false);

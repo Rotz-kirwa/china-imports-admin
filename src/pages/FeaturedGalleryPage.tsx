@@ -26,8 +26,8 @@ export default function FeaturedGalleryPage() {
         const result = await adminApi.uploadImage(files[i]);
         await adminApi.addFeaturedGalleryItem(result.imageUrl);
         successCount++;
-      } catch (err: any) {
-        toast.error(`Failed to upload ${files[i].name}: ${err.message}`);
+      } catch (err: unknown) {
+        toast.error(`Failed to upload ${files[i].name}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
     

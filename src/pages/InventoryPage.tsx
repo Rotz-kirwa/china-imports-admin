@@ -17,7 +17,7 @@ export default function InventoryPage() {
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Record<string, unknown> | null>(null);
   const [adjustQty, setAdjustQty] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
 
@@ -48,12 +48,12 @@ export default function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-inventory-logs"] });
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error(err.message || "Failed to adjust stock.");
     },
   });
 
-  const handleAdjustClick = (product: any) => {
+  const handleAdjustClick = (product: Record<string, unknown>) => {
     setSelectedProduct(product);
     setAdjustModalOpen(true);
   };
@@ -68,16 +68,17 @@ export default function InventoryPage() {
       toast.error("Please provide a reason for the adjustment.");
       return;
     }
+    if (!selectedProduct?.id) return;
     adjustMutation.mutate({
-      productId: selectedProduct.id,
+      productId: String(selectedProduct.id),
       changeQuantity: qty,
       reason: adjustReason,
     });
   };
 
-  const stats = statsData?.stats as any;
-  const logs = logsData?.logs as any[] || [];
-  const products = productsData?.products as any[] || [];
+  const stats = statsData?.stats as Record<string, number> | undefined;
+  const logs = (logsData?.logs as Record<string, unknown>[]) || [];
+  const products = (productsData?.products as Record<string, unknown>[]) || [];
 
   return (
     <div className="space-y-6">
